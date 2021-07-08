@@ -1,0 +1,218 @@
+---
+title: "Oxygen study monitoring report"
+author: ""
+date: "7/8/2021"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 4
+    toc_float: TRUE
+    toc_collapse: FALSE
+    number_sections: TRUE
+    highlight: pygments
+    theme: spacelab
+    code_folding: hide
+    <!-- df_print: paged -->
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Preparation and cleaning {.tabset}  
+
+## Load packages
+
+```{r}
+source(here::here("scripts", "load_packages.R"))
+```
+
+## Pull RedCap data  
+
+```{r}
+source(here::here("scripts", "pull_redcap.R"))
+o2_raw <- result
+```
+
+## Clean RedCap data  
+
+```{r}
+o2 <- o2_raw %>% 
+     mutate(
+          date_visit = ymd(date_visit),
+          age_group = epikit::age_categories(
+               age,
+               breakers = seq(from = 0, to = 100, by = 5))
+          )
+     
+
+# 
+# select(
+#           screen_id,
+#           redcap_repeat_instance,
+#           enrolled,
+#           dob,
+#           age,
+#           calcage,
+#           sex,
+#           height,
+#           weight,
+#           bmi,
+#           pregnant,
+#           
+#           date_visit,
+#           time_visit,
+#           referral,
+#           
+#      )
+
+```
+
+# Global overview {.tabset}
+
+Summary table by study site: 
+
+* Earliest data submission  
+* Latest data submission  
+* Number of patients considered  
+* Number of patients enrolled  
+* Percent of all enrolled patients  
+* Daily patient data (% of expected)  
+
+
+```{r, eval=F}
+o2 %>% 
+        group_b
+     count(screen_id) %>% 
+     tabyl(n) %>% 
+     janitor::adorn_pct_formatting() %>% 
+     rename(
+          site = n,
+          n_records = n_n,
+     )
+
+```
+
+```{r, eval=F}
+o2 %>%
+     group_by(n) %>%   # site
+     summarise(
+          min_date = min(date_visit, na.rm=T),
+          max_date = max(date_visit, na.rm=T)
+     )
+     
+
+```
+
+
+# Oxygen  
+
+Descriptive analysis of the types of oxygen being provided  
+
+
+
+# Survival {.tabset}
+
+## Crude rates  
+
+## Kaplan-Meier 
+
+## Cause of death  
+
+
+# Data quality {.tabset}
+
+## Anticipated errors
+
+## Outside bounds
+
+## Inconsistencies  
+
+
+
+# Enrolled Patients {.tabset}
+
+## Transfers  
+
+## Demographics  
+
+### Age-sex  
+
+```{r}
+apyramid::age_pyramid(
+     data = o2,
+     age_group = age_group,
+     split_by = sex,
+     proportional = TRUE
+)
+```
+### Pregnant  
+
+```{r}
+o2 %>% 
+     tabyl(pregnant) %>% 
+     adorn_pct_formatting()
+
+```
+
+## Records per patient  
+
+### Total  
+
+### Temporal distribution
+
+## Duration of stay  
+
+## Previous medical history (PMH)
+
+```{r}
+comor <- o2 %>% 
+     select(screen_id,
+            starts_with("pmh_")) %>% 
+     mutate(across(
+               .cols = starts_with("pmh_"),
+               .fns = as.character),
+            across(
+               .cols = starts_with("pmh_"),
+               .fns = fct_explicit_na)) %>% 
+     pivot_longer(
+          cols = starts_with("pmh_"),
+          names_to = "comorbidity",
+          values_to = "Value"
+     )
+
+ggplot(data = comor)+
+     geom_bar(mapping = aes(x = comorbidity, group = Value, fill = Value))+
+     coord_flip()+
+     theme_minimal()
+
+```
+
+## Withdrawal  
+
+```{r}
+
+```
+
+
+
+# Site summaries {.tabset}
+
+Summary information per site, with links to full reports per site.
+
+## Site 1  
+
+## Site 2  
+
+## Site 3  
+
+## Site 4  
+
+## Site 5  
+
+## Site 6  
+
+## Site 7  
+
+
+
